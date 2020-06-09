@@ -1,7 +1,7 @@
 name: box_generator
 homepage: https://github.com/stijnvanbael/box_generator
 description: A registry generator for using Box without mirrors
-version: 0.0.1
+version: 0.2.6
 
 environment:
   sdk: '>=2.8.1 <3.0.0'

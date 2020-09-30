@@ -1,7 +1,11 @@
+0.2.6+1 Bugfix
+-----------------------
+* [x] Fixed dependency on box 0.2.6
+
+
 0.2.6 PostgreSQL & Join
 -----------------------
 * [x] PostgreSQL support
-* [ ] Join
 
 0.2.5 ONE OF & CONTAINS
 -----------------------

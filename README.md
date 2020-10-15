@@ -45,3 +45,10 @@ Whenever you make a change to an annotated class, execute:
 ```
 pub run build_runner build
 ```
+
+Now you can any Box implementation as follows:
+```
+var registry = Registry();
+Employee$BoxSupport.appendToRegistry(registry);
+var box = MemoryBox(registry);
+```

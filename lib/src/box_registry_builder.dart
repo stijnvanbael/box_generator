@@ -10,20 +10,6 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
   final List<String> types = [];
 
   @override
-  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
-    var classes = (await super.generate(library, buildStep));
-    return types.isNotEmpty ? classes + initMethod() : null;
-  }
-
-  String initMethod() => '''
-  Registry initBoxRegistry() {
-    var registry = Registry();
-    ${types.map((type) => 'registry.register(${type}\$Support());').join('\n')}
-    return registry;
-  }
-  ''';
-
-  @override
   FutureOr<String> generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
     if (element.kind != ElementKind.CLASS) {
       throw 'ERROR: @Entity can only be used on a class, found on $element';
@@ -38,26 +24,43 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       throw 'ERROR: Missing serializer method on $element, please add a method "Map ${typeName}.toJson()"';
     }
     types.add(typeName);
-    var keyAccessor = inspector.keys.isEmpty
-        ? '(entity) => null'
-        : inspector.keys.length == 1
-            ? '(entity) => entity.${inspector.keys.first.name}'
-            : '(entity) => Composite({${inspector.keys.map((field) => "'${field.name}': entity.${field.name}").join(', ')}})';
-    var fieldAccessors =
-        '{' + inspector.fields.map((field) => "'${field.name}': (entity) => entity.${field.name}").join(', ') + '}';
     return '''
-    class ${typeName}\$Support extends EntitySupport<${typeName}> {
-      ${typeName}\$Support() : super(
+    class ${typeName}\$BoxSupport extends EntitySupport<${typeName}> {
+      ${typeName}\$BoxSupport() : super(
         '${typeName}',
-        ${keyAccessor},
+        ${buildKeyAccessor(inspector)},
         (map) => ${typeName}.fromJson(map),
-        ${fieldAccessors},
+        ${buildFieldAccessors(inspector)},
         [${inspector.keys.map((key) => "'${key.name}'").join(',')}],
-        {${inspector.fields.map((field) => "'${field.name}': ${field.type.element.name}").join(', ')}}
+        {${buildFieldTypes(inspector)}}
       );
+      
+      static Registry appendToRegistry(Registry registry) {
+        ${types.map((type) => 'registry.register(${type}\$BoxSupport());').join('\n')}
+        return registry;
+      }
     }
     ''';
   }
+
+  String buildFieldTypes(EntityInspector inspector) =>
+      inspector.fields.where(fieldFilter).map((field) => "'${field.name}': ${field.type.element.name}").join(', ');
+
+  String buildFieldAccessors(EntityInspector inspector) =>
+      '{' +
+      inspector.fields
+          .where(fieldFilter)
+          .map((field) => "'${field.name}': (entity) => entity.${field.name}")
+          .join(', ') +
+      '}';
+
+  bool fieldFilter(FieldElement field) => !field.isStatic;
+
+  String buildKeyAccessor(EntityInspector inspector) => inspector.keys.isEmpty
+      ? '(entity) => null'
+      : inspector.keys.length == 1
+          ? '(entity) => entity.${inspector.keys.first.name}'
+          : '(entity) => Composite({${inspector.keys.map((field) => "'${field.name}': entity.${field.name}").join(', ')}})';
 }
 
 class EntityInspector extends SimpleElementVisitor<void> {

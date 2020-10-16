@@ -1,10 +1,13 @@
+0.3.0 Easier mapping
+--------------------
+* [x] Automatic toJson and fromJson
+
 0.2.6+1 Bugfix
------------------------
+--------------
 * [x] Fixed dependency on box 0.2.6
 
-
-0.2.6 PostgreSQL & Join
------------------------
+0.2.6 PostgreSQL
+----------------
 * [x] PostgreSQL support
 
 0.2.5 ONE OF & CONTAINS
@@ -34,6 +37,17 @@
 
 Backlog
 -------
-* [ ] Automatic toJson and fromJson
+* [ ] Group by
+* [ ] Having
+* [ ] Union
+* [ ] Intersect
+* [ ] Minus/Except
+* [ ] Better test concern separation
+* [ ] Misuse reporting
+* [ ] Faster Firestore tests
 * [ ] SQLite support
+* [ ] MySQL support
 * [ ] Emulate unsupported Firestore features
+* [ ] Typesafe fields (eg: `select(employee.name).from(Employee).where(employee.department).equals('Sales')`)
+* [ ] Joins
+* [ ] Support PostgreSQL arrays and complex types (depends on driver issue: [postgresql-dart#121](https://github.com/stablekernel/postgresql-dart/issues/121))

@@ -48,7 +48,6 @@ pub run build_runner build
 
 Now you can any Box implementation as follows:
 ```
-var registry = Registry();
-Employee$BoxSupport.appendToRegistry(registry);
+var registry = Registry()..register(Employee$BoxSupport()));
 var box = MemoryBox(registry);
 ```

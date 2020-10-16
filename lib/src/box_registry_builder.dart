@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:box/box.dart';
 import 'package:build/build.dart';
@@ -17,50 +18,114 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     var inspector = EntityInspector();
     element.visitChildren(inspector);
     var typeName = element.name;
+    var deserializer = '${typeName}.fromJson(map)';
     if (inspector.deserializer == null) {
-      throw 'ERROR: Missing deserializer constructor on $element, please add a constructor "${typeName}.fromJson(Map map)"';
+      deserializer = _generateDeserializer(inspector, typeName);
     }
+    var serializer = 'entity.toJson()';
     if (inspector.serializer == null) {
-      throw 'ERROR: Missing serializer method on $element, please add a method "Map ${typeName}.toJson()"';
+      serializer = _generateSerializer(inspector);
     }
-    types.add(typeName);
     return '''
     class ${typeName}\$BoxSupport extends EntitySupport<${typeName}> {
       ${typeName}\$BoxSupport() : super(
-        '${typeName}',
-        ${buildKeyAccessor(inspector)},
-        (map) => ${typeName}.fromJson(map),
-        ${buildFieldAccessors(inspector)},
-        [${inspector.keys.map((key) => "'${key.name}'").join(',')}],
-        {${buildFieldTypes(inspector)}}
+        name: '${typeName}',
+        keyAccessor: ${_buildKeyAccessor(inspector)},
+        fieldAccessors: ${_buildFieldAccessors(inspector)},
+        keyFields: [${inspector.keys.map((key) => "'${key.name}'").join(',')}],
+        fieldTypes: {${_buildFieldTypes(inspector)}}
       );
       
-      static Registry appendToRegistry(Registry registry) {
-        ${types.map((type) => 'registry.register(${type}\$BoxSupport());').join('\n')}
-        return registry;
-      }
+      @override
+      ${typeName} deserialize(Map<String, dynamic> map) => $deserializer;
+      
+      @override
+      Map<String, dynamic> serialize(${typeName} entity) => $serializer;
     }
     ''';
   }
 
-  String buildFieldTypes(EntityInspector inspector) =>
-      inspector.fields.where(fieldFilter).map((field) => "'${field.name}': ${field.type.element.name}").join(', ');
+  String _buildFieldTypes(EntityInspector inspector) =>
+      inspector.fields.where(_fieldFilter).map((field) => "'${field.name}': ${field.type.element.name}").join(', ');
 
-  String buildFieldAccessors(EntityInspector inspector) =>
+  String _buildFieldAccessors(EntityInspector inspector) =>
       '{' +
       inspector.fields
-          .where(fieldFilter)
+          .where(_fieldFilter)
           .map((field) => "'${field.name}': (entity) => entity.${field.name}")
           .join(', ') +
       '}';
 
-  bool fieldFilter(FieldElement field) => !field.isStatic;
+  bool _fieldFilter(FieldElement field) => !field.isStatic;
 
-  String buildKeyAccessor(EntityInspector inspector) => inspector.keys.isEmpty
+  String _buildKeyAccessor(EntityInspector inspector) => inspector.keys.isEmpty
       ? '(entity) => null'
       : inspector.keys.length == 1
           ? '(entity) => entity.${inspector.keys.first.name}'
           : '(entity) => Composite({${inspector.keys.map((field) => "'${field.name}': entity.${field.name}").join(', ')}})';
+
+  String _generateDeserializer(EntityInspector inspector, String typeName) => 'map != null '
+      '? $typeName(${inspector.fields.map((field) => '${field.name}: ${_deserializeType(field.type, "map['${field.name}']")}').join(', ')})'
+      ': null';
+
+  String _generateSerializer(EntityInspector inspector) => 'entity != null '
+      '? {${inspector.fields.map((field) => "'${field.name}': ${_serializeType(field.type, 'entity.${field.name}')}").join(', ')}}'
+      ': null';
+
+  String _serializeType(DartType type, String input) {
+    if (_isPrimitive(type)) {
+      return input;
+    } else if (type.isDartCoreList) {
+      return _serializeList((type as ParameterizedType).typeArguments.first, input);
+    } else if (type.isDartCoreSet) {
+      return _serializeSet((type as ParameterizedType).typeArguments.first, input);
+    } else if (_isType(type, 'dart.core', 'DateTime')) {
+      return '$input?.toIso8601String()';
+    } else {
+      return 'serializeEntity($input)';
+    }
+  }
+
+  String _deserializeType(DartType type, String input) {
+    if (_isPrimitive(type)) {
+      return input;
+    } else if (type.isDartCoreList) {
+      return _deserializeList((type as ParameterizedType).typeArguments.first, input);
+    } else if (type.isDartCoreSet) {
+      return _deserializeSet((type as ParameterizedType).typeArguments.first, input);
+    } else if (_isType(type, 'dart.core', 'DateTime')) {
+      return 'deserializeDateTime($input)';
+    } else {
+      return 'deserializeEntity<${type.element.name}>($input)';
+    }
+  }
+
+  bool _isPrimitive(DartType type) {
+    return type.isDartCoreBool ||
+        type.isDartCoreString ||
+        type.isDartCoreInt ||
+        type.isDartCoreDouble ||
+        type.isDartCoreNum;
+  }
+
+  bool _isType(DartType type, String library, String typeName) =>
+      type.element.library.name == library && type.element.name == typeName;
+
+  String _deserializeList(DartType type, String input) => '$input != null '
+      '? List<${type.element.name}>.from($input.map((element) => ${_deserializeType(type, 'element')})) '
+      ': null';
+
+  String _deserializeSet(DartType type, String input) => '$input != null '
+      '? Set<${type.element.name}>.from($input.map((element) => ${_deserializeType(type, 'element')})) '
+      ': null';
+
+  String _serializeList(DartType type, String input) => '$input != null '
+      '? $input.map((element) => ${_serializeType(type, 'element')}).toList() '
+      ': null';
+
+  String _serializeSet(DartType type, String input) => '$input != null '
+      '? $input.map((element) => ${_serializeType(type, 'element')}).toSet() '
+      ': null';
 }
 
 class EntityInspector extends SimpleElementVisitor<void> {

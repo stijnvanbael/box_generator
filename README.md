@@ -16,7 +16,7 @@ Usage
 -----
 
 Annotate the class you want to generate Box bindings for and add the generated file as a part.
-Add constructor `fromJson` and method `toJson`.
+Add a constructor with named parameters.
 
 ```
 import 'package:box/box.dart';
@@ -29,16 +29,23 @@ class Employee {
   final String id;
   final String name;
 
-  Employee(this.id, this.name);
+  Employee({this.id, this.name});
+}
+```
 
-  Employee.fromJson(Map<String, dynamic> json) 
-    : this(json['id'], json['name']);
+You can customize serialization by adding a `fromJson` constructor and a `toJson` method. 
 
-  Map<String, dynamic> toJson() => {
+```
+Employee.fromJson(Map<String, dynamic> json) : this(
+    id: json['id'],
+    name: json['name'],
+);
+
+Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-  }
-}
+};
+
 ```
 
 Whenever you make a change to an annotated class, execute:

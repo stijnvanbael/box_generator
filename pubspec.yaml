@@ -1,6 +1,6 @@
 name: box_generator
 homepage: https://github.com/stijnvanbael/box_generator
-description: A registry generator for using Box without mirrors
+description: Registry generator for Box, a fluent Dart persistence API inspired by SQL.
 version: 0.3.0
 
 environment:

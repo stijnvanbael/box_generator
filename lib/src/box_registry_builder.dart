@@ -157,7 +157,7 @@ class EntityInspector extends SimpleElementVisitor<void> {
 
   @override
   void visitFieldElement(FieldElement element) {
-    if (element.name != 'hashCode') {
+    if (!element.isSynthetic) {
       fields.add(element);
       if (element.metadata.any(_isKey)) {
         keys.add(element);

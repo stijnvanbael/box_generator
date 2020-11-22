@@ -1,3 +1,7 @@
+0.3.1 Delete
+------------
+* [x] DELETE FROM
+
 0.3.0+1 Latest versions
 -----------------------
 * [x] Bumped versions of dependencies

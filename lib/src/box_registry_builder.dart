@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:box/box.dart';
@@ -41,7 +42,7 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       );
       
       @override
-      $typeName? deserialize(Map<String, dynamic>? map) => $deserializer;
+      $typeName deserialize(Map<String, dynamic> map) => $deserializer;
       
       @override
       Map<String, dynamic> serialize($typeName entity) => $serializer;
@@ -85,9 +86,7 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
           : '(entity) => Composite({${inspector.keys.map((field) => "'${field.name}': entity.${field.name}").join(', ')}})';
 
   String _generateDeserializer(EntityInspector inspector, String typeName) =>
-      'map != null '
-      '? $typeName(${inspector.fields.map((field) => '${field.name}: ${_deserializeType(field.type, "map['${field.name}']")}').join(', ')})'
-      ': null';
+      '$typeName(${inspector.fields.map((field) => '${field.name}: ${_deserializeType(field.type, "map['${field.name}']")}').join(', ')})';
 
   String _generateSerializer(EntityInspector inspector) =>
       '{${inspector.fields.map((field) => "'${field.name}': ${_serializeType(field.type, 'entity.${field.name}')}").join(', ')}}';
@@ -116,21 +115,35 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     if (_isPrimitive(type)) {
       return input;
     } else if (type.isDartCoreList) {
-      return _deserializeList(
-          (type as ParameterizedType).typeArguments.first, input);
+      return _wrapNullable(
+          type,
+          input,
+          _deserializeList(
+              (type as ParameterizedType).typeArguments.first, input));
     } else if (type.isDartCoreSet) {
-      return _deserializeSet(
-          (type as ParameterizedType).typeArguments.first, input);
+      return _wrapNullable(
+          type,
+          input,
+          _deserializeSet(
+              (type as ParameterizedType).typeArguments.first, input));
     } else if (_isType(type, 'dart.core', 'DateTime')) {
-      return 'deserializeDateTime($input)';
+      return _wrapNullable(type, input, 'deserializeDateTime($input)');
     } else if (_isEnum(type.element!)) {
-      return 'deserializeEnum($input, ${type.element!.name}.values)';
+      return _wrapNullable(
+          type, input, 'deserializeEnum($input, ${type.element!.name}.values)');
     } else if (_isEntity(type.element!)) {
-      return 'deserializeEntity<${type.element!.name}>($input)';
+      return _wrapNullable(
+          type, input, 'deserializeEntity<${type.element!.name}>($input)');
     } else {
-      return '$input != null ? ${type.element!.name}.fromJson($input) : null';
+      return _wrapNullable(
+          type, input, '${type.element!.name}.fromJson($input)');
     }
   }
+
+  String _wrapNullable(DartType type, String input, String output) =>
+      type.nullabilitySuffix == NullabilitySuffix.question
+          ? '$input != null ? $output : null'
+          : output;
 
   bool _isPrimitive(DartType type) {
     return type.isDartCoreBool ||
@@ -154,9 +167,11 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       '? Set<${type.element!.name}>.from($input!.map((element) => ${_deserializeType(type, 'element')})) '
       ': null';
 
-  String _serializeList(DartType type, String input) => '$input?.map((element) => ${_serializeType(type, 'element')}).toList()';
+  String _serializeList(DartType type, String input) =>
+      '$input?.map((element) => ${_serializeType(type, 'element')}).toList()';
 
-  String _serializeSet(DartType type, String input) => '$input?.map((element) => ${_serializeType(type, 'element')}).toSet()';
+  String _serializeSet(DartType type, String input) =>
+      '$input?.map((element) => ${_serializeType(type, 'element')}).toSet()';
 
   bool _isEnum(Element element) => element is ClassElement && element.isEnum;
 }

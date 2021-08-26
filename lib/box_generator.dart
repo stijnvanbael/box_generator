@@ -6,4 +6,5 @@ import 'package:source_gen/source_gen.dart';
 
 export 'src/box_registry_builder.dart';
 
-Builder registryBuilder(BuilderOptions options) => SharedPartBuilder([BoxRegistryBuilder()], 'box_generator');
+Builder registryBuilder(BuilderOptions options) =>
+    SharedPartBuilder([BoxRegistryBuilder()], 'box_generator');

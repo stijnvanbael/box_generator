@@ -1,3 +1,16 @@
+0.3.3 Autoconvert
+-----------------
+* [x] Convert types like enums and DateTime in MongoDB queries and deletes
+* [x] Null safety
+
+0.3.2 Indexes
+-------------
+* [x] Create indexes for MongoDB and PostgreSQL
+
+0.3.1+1 Return generated ID
+---------------------------
+* [x] Return generated ID
+
 0.3.1 Delete
 ------------
 * [x] DELETE FROM
@@ -9,10 +22,6 @@
 0.3.0 Easier mapping
 --------------------
 * [x] Automatic toJson and fromJson
-
-0.2.6+1 Bugfix
---------------
-* [x] Fixed dependency on box 0.2.6
 
 0.2.6 PostgreSQL
 ----------------
@@ -45,6 +54,7 @@
 
 Backlog
 -------
+* [ ] Create indexes for memory, file and Firestore
 * [ ] Group by
 * [ ] Having
 * [ ] Union

@@ -9,7 +9,8 @@ environment:
 dependencies:
   build: ^2.0.2
   source_gen: ^1.0.2
-  box: ^0.3.3+1
+  box: #^0.3.3+1
+    path: ../box
   analyzer: ^1.7.1
 
 dev_dependencies:

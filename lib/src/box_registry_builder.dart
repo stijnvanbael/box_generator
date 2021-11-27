@@ -101,13 +101,13 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       return _serializeSet(
           (type as ParameterizedType).typeArguments.first, input);
     } else if (_isType(type, 'dart.core', 'DateTime')) {
-      return '$input?.toIso8601String()';
+      return '$input${_nullable(type)}.toIso8601String()';
     } else if (_isEnum(type.element!)) {
       return 'serializeEnum($input)';
     } else if (_isEntity(type.element!)) {
       return 'serializeEntity($input)';
     } else {
-      return '$input?.toJson()';
+      return '$input${_nullable(type)}.toJson()';
     }
   }
 
@@ -161,19 +161,22 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
 
   String _deserializeList(DartType type, String input) => '$input != null '
       '? List<${type.element!.name}>.from($input!.map((element) => ${_deserializeType(type, 'element')})) '
-      ': null';
+      ': <${type.element!.name}>[]';
 
   String _deserializeSet(DartType type, String input) => '$input != null '
       '? Set<${type.element!.name}>.from($input!.map((element) => ${_deserializeType(type, 'element')})) '
-      ': null';
+      ': <${type.element!.name}>{}';
 
   String _serializeList(DartType type, String input) =>
-      '$input?.map((element) => ${_serializeType(type, 'element')}).toList()';
+      '$input${_nullable(type)}.map((element) => ${_serializeType(type, 'element')}).toList()';
 
   String _serializeSet(DartType type, String input) =>
-      '$input?.map((element) => ${_serializeType(type, 'element')}).toSet()';
+      '$input${_nullable(type)}.map((element) => ${_serializeType(type, 'element')}).toSet()';
 
   bool _isEnum(Element element) => element is ClassElement && element.isEnum;
+
+  String _nullable(DartType type) =>
+      type.nullabilitySuffix == NullabilitySuffix.none ? '' : '?';
 }
 
 class EntityInspector extends SimpleElementVisitor<void> {

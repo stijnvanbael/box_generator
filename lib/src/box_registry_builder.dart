@@ -95,11 +95,9 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     if (_isPrimitive(type)) {
       return input;
     } else if (type.isDartCoreList) {
-      return _serializeList(
-          (type as ParameterizedType).typeArguments.first, input);
+      return _serializeList(type as ParameterizedType, input);
     } else if (type.isDartCoreSet) {
-      return _serializeSet(
-          (type as ParameterizedType).typeArguments.first, input);
+      return _serializeSet(type as ParameterizedType, input);
     } else if (_isType(type, 'dart.core', 'DateTime')) {
       return '$input${_nullable(type)}.toIso8601String()';
     } else if (_isEnum(type.element!)) {
@@ -160,18 +158,25 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       _isType(metadata.computeConstantValue()!.type!, 'box.core', 'Entity'));
 
   String _deserializeList(DartType type, String input) => '$input != null '
-      '? List<${type.element!.name}>.from($input!.map((element) => ${_deserializeType(type, 'element')})) '
+      '? List<${type.element!.name}>.from($input!.map((element) => '
+      '${_deserializeType(type, 'element')})) '
       ': <${type.element!.name}>[]';
 
   String _deserializeSet(DartType type, String input) => '$input != null '
-      '? Set<${type.element!.name}>.from($input!.map((element) => ${_deserializeType(type, 'element')})) '
+      '? Set<${type.element!.name}>.from($input!.map((element) => '
+      '${_deserializeType(type, 'element')})) '
       ': <${type.element!.name}>{}';
 
-  String _serializeList(DartType type, String input) =>
-      '$input${_nullable(type)}.map((element) => ${_serializeType(type, 'element')}).toList()';
+  String _serializeList(ParameterizedType type, String input) {
+    return '$input${_nullable(type)}.map((element) => '
+        '${_serializeType(type.typeArguments.first, 'element')})'
+        '.toList()';
+  }
 
-  String _serializeSet(DartType type, String input) =>
-      '$input${_nullable(type)}.map((element) => ${_serializeType(type, 'element')}).toSet()';
+  String _serializeSet(ParameterizedType type, String input) =>
+      '$input${_nullable(type)}.map((element) => '
+      '${_serializeType(type.typeArguments.first, 'element')})'
+      '.toSet()';
 
   bool _isEnum(Element element) => element is ClassElement && element.isEnum;
 

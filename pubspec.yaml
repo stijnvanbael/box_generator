@@ -10,7 +10,7 @@ dependencies:
   build: ^2.3.0
   source_gen: ^1.2.2
   box: ^0.3.3+2
-  analyzer: ^2.7.0
+  analyzer: ^4.1.0
 
 dev_dependencies:
   lints: ^1.0.0

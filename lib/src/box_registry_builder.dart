@@ -178,7 +178,8 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       '${_serializeType(type.typeArguments.first, 'element')})'
       '.toSet()';
 
-  bool _isEnum(Element element) => element is ClassElement && element.isEnum;
+  bool _isEnum(Element element) =>
+      element is ClassElement && element.isDartCoreEnum;
 
   String _nullable(DartType type) =>
       type.nullabilitySuffix == NullabilitySuffix.none ? '' : '?';

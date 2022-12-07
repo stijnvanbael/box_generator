@@ -98,6 +98,8 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       return _serializeList(type as ParameterizedType, input);
     } else if (type.isDartCoreSet) {
       return _serializeSet(type as ParameterizedType, input);
+    } else if (type.isDartCoreMap) {
+      return _serializeMap(type as ParameterizedType, input);
     } else if (_isType(type, 'dart.core', 'DateTime')) {
       return '$input${_nullable(type)}.toIso8601String()';
     } else if (_isEnum(type.element!)) {
@@ -105,7 +107,7 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     } else if (_isEntity(type.element!)) {
       return 'serializeEntity($input)';
     } else {
-      return '$input${_nullable(type)}.toJson()';
+      return 'serializeDynamic($input${_nullable(type)})';
     }
   }
 
@@ -124,6 +126,17 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
           input,
           _deserializeSet(
               (type as ParameterizedType).typeArguments.first, input));
+    } else if (type.isDartCoreMap) {
+      return _wrapNullable(
+          type,
+          input,
+          _deserializeMap(
+            (type as ParameterizedType).typeArguments[0],
+            type.typeArguments[1],
+            input,
+          ));
+    } else if (type.isDynamic) {
+      return input;
     } else if (_isType(type, 'dart.core', 'DateTime')) {
       return _wrapNullable(type, input, 'deserializeDateTime($input)');
     } else if (_isEnum(type.element!)) {
@@ -167,6 +180,12 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       '${_deserializeType(type, 'element')})) '
       ': <${type.element!.name}>{}';
 
+  String _deserializeMap(DartType keyType, DartType valueType, String input) =>
+      '$input != null '
+      '? $input!.map((key, value) => '
+      'MapEntry(key, ${_deserializeType(keyType, 'value')})) '
+      ': <${keyType.element!.name}, ${valueType.element!.name}>{}';
+
   String _serializeList(ParameterizedType type, String input) {
     return '$input${_nullable(type)}.map((element) => '
         '${_serializeType(type.typeArguments.first, 'element')})'
@@ -177,6 +196,10 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       '$input${_nullable(type)}.map((element) => '
       '${_serializeType(type.typeArguments.first, 'element')})'
       '.toSet()';
+
+  String _serializeMap(ParameterizedType type, String input) =>
+      '$input${_nullable(type)}.map((key, value) => '
+      'MapEntry(key, ${_serializeType(type.typeArguments.first, 'value')}))';
 
   bool _isEnum(Element element) =>
       element is ClassElement && element.isDartCoreEnum;

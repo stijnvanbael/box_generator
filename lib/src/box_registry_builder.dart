@@ -6,6 +6,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:box/box.dart';
+import 'package:box_generator/src/util.dart';
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -217,7 +218,7 @@ class EntityInspector extends SimpleElementVisitor<void> {
 
   @override
   void visitFieldElement(FieldElement element) {
-    if (!element.isSynthetic) {
+    if (!element.isSynthetic && !element.hasMeta(Transient)) {
       fields.add(element);
       if (element.metadata.any(_isKey)) {
         keys.add(element);

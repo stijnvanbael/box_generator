@@ -214,7 +214,7 @@ class EntityInspector extends SimpleElementVisitor<void> {
   final List<FieldElement> fields = [];
   final List<DartObject> indexes = [];
   MethodElement? serializer;
-  ConstructorElement? deserializer;
+  ExecutableElement? deserializer;
 
   @override
   void visitFieldElement(FieldElement element) {
@@ -243,6 +243,8 @@ class EntityInspector extends SimpleElementVisitor<void> {
   void visitMethodElement(MethodElement element) {
     if (element.name == 'toJson') {
       serializer = element;
+    } else if (element.name == 'fromJson') {
+      deserializer = element;
     }
   }
 

@@ -1,3 +1,8 @@
+0.3.5+1 Static fromJson
+-------------------------------
+
+* [x] Support static fromJson next to factory constructors
+
 0.3.5 Transient
 -------------------------------
 

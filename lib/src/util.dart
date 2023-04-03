@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_visitor.dart';
@@ -7,6 +8,12 @@ extension ElementHasMeta on Element {
       .any((element) => isType(element.computeConstantValue()!.type!, meta));
 }
 
+extension ElementGetMeta on Element {
+  DartObject? getMeta<T>() => metadata
+      .where((element) => isType(element.computeConstantValue()!.type!, T))
+      .map((element) => element.computeConstantValue()!)
+      .firstOrNull;
+}
 
 bool isType(DartType typeToTest, Type expectedType) =>
     typeToTest.accept(TypeChecker(expectedType));
@@ -40,4 +47,12 @@ class TypeChecker implements TypeVisitor<bool> {
 
   @override
   bool visitRecordType(RecordType type) => false;
+}
+
+extension IterableExtension<T> on Iterable<T> {
+  T? get firstOrNull {
+    var iterator = this.iterator;
+    if (iterator.moveNext()) return iterator.current;
+    return null;
+  }
 }

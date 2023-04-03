@@ -22,7 +22,8 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     var inspector = EntityInspector();
     element.visitChildren(inspector);
     inspector.visitClassElement(element as ClassElement);
-    var typeName = element.name;
+    final typeName = element.name;
+    final serializedName = _nameOf(element);
     var deserializer = '$typeName.fromJson(map)';
     if (inspector.deserializer == null) {
       deserializer = _generateDeserializer(inspector, typeName);
@@ -34,7 +35,7 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     return '''
     class $typeName\$BoxSupport extends EntitySupport<$typeName> {
       $typeName\$BoxSupport() : super(
-        name: '$typeName',
+        name: '$serializedName',
         keyAccessor: ${_buildKeyAccessor(inspector)},
         fieldAccessors: ${_buildFieldAccessors(inspector)},
         keyFields: [${inspector.keys.map((key) => "'${key.name}'").join(',')}],
@@ -49,6 +50,12 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       Map<String, dynamic> serialize($typeName entity) => $serializer;
     }
     ''';
+  }
+
+  String _nameOf(ClassElement element) {
+    final entity = element.getMeta<Entity>()!;
+    final name = entity.getField('name')?.toStringValue();
+    return name ?? element.name;
   }
 
   String _buildIndexes(EntityInspector inspector) =>
@@ -218,7 +225,10 @@ class EntityInspector extends SimpleElementVisitor<void> {
 
   @override
   void visitFieldElement(FieldElement element) {
-    if (!element.isSynthetic && !element.hasMeta(Transient)) {
+    if (!element.isSynthetic &&
+        !element.isStatic &&
+        !element.isPrivate &&
+        !element.hasMeta(Transient)) {
       fields.add(element);
       if (element.metadata.any(_isKey)) {
         keys.add(element);

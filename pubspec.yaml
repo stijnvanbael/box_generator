@@ -1,19 +1,20 @@
 name: box_generator
 homepage: https://github.com/stijnvanbael/box_generator
 description: Registry generator for Box, a fluent Dart persistence API inspired by SQL.
-version: 0.3.6
+version: 0.4.0
 
 environment:
-  sdk: '>=2.14.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  build: ^2.3.0
-  source_gen: ^1.2.2
-  box: ^0.3.6
-  analyzer: ^5.2.0
+  build: ^2.4.1
+  source_gen: ^1.4.0
+  box:
+    path: ../box
+  analyzer: ^6.2.0
 
 dev_dependencies:
-  lints: ^2.0.1
-  build_test: ^2.1.5
-  build_runner: ^2.3.2
-  test: ^1.17.8
+  lints: ^2.1.1
+  build_test: ^2.2.0
+  build_runner: ^2.4.6
+  test: ^1.24.6

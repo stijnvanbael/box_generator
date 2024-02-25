@@ -143,10 +143,13 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
             type.typeArguments[1],
             input,
           ));
-    } else if (type.isDynamic) {
+    } else if (type is DynamicType) {
       return input;
     } else if (_isType(type, 'dart.core', 'DateTime')) {
       return _wrapNullable(type, input, 'deserializeDateTime($input)');
+    } else if (_isType(type, '', 'UuidValue')) {
+      // Apparently, UuidValue doesn't have a library declaration in V4
+      return _wrapNullable(type, input, 'deserializeUuid($input)');
     } else if (_isEnum(type.element!)) {
       return _wrapNullable(
           type, input, 'deserializeEnum($input, ${type.element!.name}.values)');
@@ -209,8 +212,7 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
       '$input${_nullable(type)}.map((key, value) => '
       'MapEntry(key, ${_serializeType(type.typeArguments.first, 'value')}))';
 
-  bool _isEnum(Element element) =>
-      element is ClassElement && element.isDartCoreEnum;
+  bool _isEnum(Element element) => element is EnumElement;
 
   String _nullable(DartType type) =>
       type.nullabilitySuffix == NullabilitySuffix.none ? '' : '?';

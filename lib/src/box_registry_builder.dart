@@ -19,9 +19,15 @@ class BoxRegistryBuilder extends GeneratorForAnnotation<Entity> {
     if (element.kind != ElementKind.CLASS) {
       throw 'ERROR: @Entity can only be used on a class, found on $element';
     }
-    var inspector = EntityInspector();
-    element.visitChildren(inspector);
-    inspector.visitClassElement(element as ClassElement);
+    final inspector = EntityInspector();
+    var clazz = element as ClassElement;
+    clazz.visitChildren(inspector);
+    inspector.visitClassElement(clazz);
+    while (clazz.supertype?.element is ClassElement) {
+      clazz = clazz.supertype!.element as ClassElement;
+      inspector.visitClassElement(clazz);
+      clazz.visitChildren(inspector);
+    }
     final typeName = element.name;
     final serializedName = _nameOf(element);
     var deserializer = '$typeName.fromJson(map)';
